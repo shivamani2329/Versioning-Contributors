@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake Game</title>
+<style>
+    canvas {
+        display: block;
+        margin: 0 auto;
+        border: 1px solid black;
+    }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const snakeBlockSize = 10;
+        let snakeSpeed = 100;
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+
+        let snake = [{ x: canvasWidth / 2, y: canvasHeight / 2 }];
+        let food = { x: getRandomPosition(canvasWidth), y: getRandomPosition(canvasHeight) };
+        let dx = 0;
+        let dy = 0;
+        let score = 0;
+        let colors = ['#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
+                    '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D'];
+
+        document.addEventListener('keydown', changeDirection);
+
+        function changeDirection(event) {
+            const LEFT_KEY = 37;
+            const RIGHT_KEY = 39;
+            const UP_KEY = 38;
+            const DOWN_KEY = 40;
+
+            const keyPressed = event.keyCode;
+            const goingUp = dy === -snakeBlockSize;
+            const goingDown = dy === snakeBlockSize;
+            const goingRight = dx === snakeBlockSize;
+            const goingLeft = dx === -snakeBlockSize;
+
+            if (keyPressed === LEFT_KEY && !goingRight) {
+                dx = -snakeBlockSize;
+                dy = 0;
+            }
+
+            if (keyPressed === UP_KEY && !goingDown) {
+                dx = 0;
+                dy = -snakeBlockSize;
+            }
+
+            if (keyPressed === RIGHT_KEY && !goingLeft) {
+                dx = snakeBlockSize;
+                dy = 0;
+            }
+
+            if (keyPressed === DOWN_KEY && !goingUp) {
+                dx = 0;
+                dy = snakeBlockSize;
+            }
+        }
+
+        function drawSnake() {
+            snake.forEach((snakePart, index) => {
+                ctx.fillStyle = colors[index % colors.length];
+                ctx.fillRect(snakePart.x, snakePart.y, snakeBlockSize, snakeBlockSize);
+            });
+        }
+
+        function drawFood() {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(food.x, food.y, snakeBlockSize, snakeBlockSize);
+        }
+
+        function getRandomPosition(max) {
+            return Math.floor(Math.random() * max / snakeBlockSize) * snakeBlockSize;
+        }
+
+        function moveSnake() {
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            snake.unshift(head);
+
+            const didEatFood = snake[0].x === food.x && snake[0].y === food.y;
+            if (didEatFood) {
+                score++;
+                document.getElementById('score').innerText = 'Score: ' + score;
+                food = { x: getRandomPosition(canvasWidth), y: getRandomPosition(canvasHeight) };
+            } else {
+                snake.pop();
+            }
+        }
+
+        function isGameOver() {
+            for (let i = 4; i < snake.length; i++) {
+                if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
+                    return true;
+                }
+            }
+
+            const hitLeftWall = snake[0].x < 0;
+            const hitRightWall = snake[0].x > canvasWidth - snakeBlockSize;
+            const hitTopWall = snake[0].y < 0;
+            const hitBottomWall = snake[0].y > canvasHeight - snakeBlockSize;
+
+            return hitLeftWall || hitRightWall || hitTopWall || hitBottomWall;
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        }
+
+        function main() {
+            if (isGameOver()) {
+                clearInterval(interval);
+                alert('Game Over. Your score is ' + score);
+                window.location.reload();
+            }
+
+            clearCanvas();
+            drawFood();
+            drawSnake();
+            moveSnake();
+        }
+
+        const interval = setInterval(main, snakeSpeed);
+    });
+</script>
+<div id="score">Score: 0</div>
+</body>
+</html>
